@@ -2,6 +2,5 @@
 
 public interface ISystemMonitor
 {
-    double GetCpuUsage();
-    double GetMemoryUsage();
+    SystemStatus GetStatus();
 }

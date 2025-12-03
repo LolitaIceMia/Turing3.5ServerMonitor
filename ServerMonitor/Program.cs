@@ -11,63 +11,62 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("正在扫描 Turing Smart Screen 设备...");
+        Console.WriteLine("=== Turing Smart Screen Monitor ===");
 
-        // 1. 自动查找端口
+        // 1. 初始化传感器
+        ISystemMonitor monitor;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            Console.WriteLine("OS: Linux (Loading LinuxHardwareMonitor...)");
+            monitor = new LinuxHardwareMonitor();
+        }
+        else
+        {
+            Console.WriteLine("OS: Windows (Loading MockMonitor...)");
+            monitor = new WindowsHardwareMonitor();
+        }
+
+        // 2. 查找屏幕
         string? portName = PortFinder.FindTuringPort();
-
         if (portName == null)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("错误: 未找到 VID=1A86 PID=5722 的设备！");
-            Console.WriteLine("请检查 USB 连接。Linux 用户请确保有权限读取 /sys/class/tty。");
+            Console.WriteLine("错误: 未找到设备! (VID=1A86 PID=5722)");
             Console.ResetColor();
             return;
         }
+        Console.WriteLine($"设备已连接: {portName}");
 
-        Console.WriteLine($"已发现设备，端口: {portName}");
-
+        // 3. 启动循环
         using var driver = new ScreenDriver();
         using var renderer = new SceneRenderer(320, 480);
-
-        // 简单工厂模式选择 Monitor
-        ISystemMonitor monitor;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            monitor = new LinuxMonitor();
-        else
-            monitor = new LinuxMonitor(); // 临时 fallback, Windows 可扩展 WindowsMonitor
 
         try
         {
             driver.Connect(portName);
-            Console.WriteLine("连接成功，正在初始化...");
-
-            // 亮屏与清屏
             driver.SendCommand(Command.ScreenOn);
             driver.SendCommand(Command.Clear);
 
-            Console.WriteLine("开始渲染循环 (按 Ctrl+C 退出)...");
+            Console.WriteLine("开始监控 (按 Ctrl+C 退出)...");
 
-            long frameCount = 0;
             while (true)
             {
-                // 1. 获取数据
-                double cpu = monitor.GetCpuUsage();
-                double mem = monitor.GetMemoryUsage();
+                // 获取数据
+                var status = monitor.GetStatus();
 
-                // 2. 绘制画面
-                using SKBitmap bitmap = renderer.Render(cpu, mem, $"Frame: {frameCount++}");
+                // 渲染
+                using SKBitmap frame = renderer.Render(status);
 
-                // 3. 发送数据
-                driver.SendImage(bitmap);
+                // 发送
+                driver.SendImage(frame);
 
-                // 控制帧率 (例如 10 FPS)
-                Thread.Sleep(100);
+                // Linux下建议 0.5秒 - 1秒刷新一次，太快会占满 USB 带宽
+                Thread.Sleep(500);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"发生错误: {ex.Message}");
+            Console.WriteLine($"运行时错误: {ex.Message}");
         }
     }
 }
