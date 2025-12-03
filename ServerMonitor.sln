@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerMonitor", "ServerMonitor\ServerMonitor.csproj", "{FA728A96-58AE-4400-896A-11D8BE04CB8F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA728A96-58AE-4400-896A-11D8BE04CB8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA728A96-58AE-4400-896A-11D8BE04CB8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA728A96-58AE-4400-896A-11D8BE04CB8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA728A96-58AE-4400-896A-11D8BE04CB8F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
