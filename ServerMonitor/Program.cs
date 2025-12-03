@@ -1,69 +1,73 @@
-﻿using SkiaSharp;
-using ServerMonitor;
-using TuringSmartScreen;
+﻿using System.Runtime.InteropServices;
+using SkiaSharp;
+using ServerMonitor.Hardware;
+using ServerMonitor.Graphics;
+using ServerMonitor.Protocol;
+using ServerMonitor.Sensors;
 
-Console.WriteLine("Scanning Turing Smart Screen device...");
+namespace ServerMonitor;
 
-// 1. 自动查找端口
-string? portName = PortFinder.FindTuringPort();
-
-if (portName == null)
+class Program
 {
-    Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine("Error: Device not found for VID=1A86 PID=5722!");
-    Console.WriteLine("Please check the USB connection. Linux users should ensure they have permission to read /sys/class/tty.");
-    Console.WriteLine("Use command: sudo usermod -aG dialout $USER");
-    Console.ResetColor();
-    return;
-}
-
-Console.WriteLine($"Found device: {portName}");
-
-using var driver = new ScreenDriver();
-try
-{
-    driver.Connect(portName);
-    Console.WriteLine("Initial device...");
-    //driver.Reset();
-
-
-    // 2. 准备画布 (320x480)
-    using var surface = SKSurface.Create(new SKImageInfo(320, 480));
-    var canvas = surface.Canvas;
-    var paint = new SKPaint
+    static void Main(string[] args)
     {
-        Color = SKColors.White,
-        TextSize = 40,
-        IsAntialias = true,
-        TextAlign = SKTextAlign.Center
-    };
+        Console.WriteLine("正在扫描 Turing Smart Screen 设备...");
 
-    Console.WriteLine("Running ...");
+        // 1. 自动查找端口
+        string? portName = PortFinder.FindTuringPort();
 
-    int frameCount = 0;
-    while (true)
-    {
-        // --- 绘图逻辑 ---
-        canvas.Clear(SKColors.Black); // 背景黑
+        if (portName == null)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("错误: 未找到 VID=1A86 PID=5722 的设备！");
+            Console.WriteLine("请检查 USB 连接。Linux 用户请确保有权限读取 /sys/class/tty。");
+            Console.ResetColor();
+            return;
+        }
 
-        // 绘制动态文本
-        string text = $"Frame: {frameCount++}";
-        canvas.DrawText("Turing Screen", 160, 200, paint);
-        canvas.DrawText(text, 160, 260, paint);
+        Console.WriteLine($"已发现设备，端口: {portName}");
 
-        // --- 绘制结束，获取位图 ---
-        using var snapshot = surface.Snapshot();
-        using var bitmap = SKBitmap.FromImage(snapshot);
+        using var driver = new ScreenDriver();
+        using var renderer = new SceneRenderer(320, 480);
 
-        // --- 发送到屏幕 ---
-        // 注意：全屏刷新 300KB 数据在 USB FS 上较慢，建议优化为局部刷新
-        driver.SendImage(0, 0, bitmap);
+        // 简单工厂模式选择 Monitor
+        ISystemMonitor monitor;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            monitor = new LinuxMonitor();
+        else
+            monitor = new LinuxMonitor(); // 临时 fallback, Windows 可扩展 WindowsMonitor
 
-        // 控制帧率，避免占用过多 CPU
-        Thread.Sleep(100);
+        try
+        {
+            driver.Connect(portName);
+            Console.WriteLine("连接成功，正在初始化...");
+
+            // 亮屏与清屏
+            driver.SendCommand(Command.ScreenOn);
+            driver.SendCommand(Command.Clear);
+
+            Console.WriteLine("开始渲染循环 (按 Ctrl+C 退出)...");
+
+            long frameCount = 0;
+            while (true)
+            {
+                // 1. 获取数据
+                double cpu = monitor.GetCpuUsage();
+                double mem = monitor.GetMemoryUsage();
+
+                // 2. 绘制画面
+                using SKBitmap bitmap = renderer.Render(cpu, mem, $"Frame: {frameCount++}");
+
+                // 3. 发送数据
+                driver.SendImage(bitmap);
+
+                // 控制帧率 (例如 10 FPS)
+                Thread.Sleep(100);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"发生错误: {ex.Message}");
+        }
     }
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"ERROR: {ex.Message}");
 }
