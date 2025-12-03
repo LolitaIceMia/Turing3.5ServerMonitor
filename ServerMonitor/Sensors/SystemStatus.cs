@@ -11,12 +11,11 @@ public struct SystemStatus
     public double MemTotalGB { get; set; }
     public double MemUsedGB { get; set; }
 
-    // GPU (Intel Arc A380)
+    // GPU
     public double GpuUsage { get; set; }
     public double GpuTemp { get; set; }
-    public double VramUsedGB { get; set; }
 
     // Network
-    public double UploadSpeed { get; set; }   // MB/s
-    public double DownloadSpeed { get; set; } // MB/s
+    public double UploadSpeed { get; set; }   // KB/s
+    public double DownloadSpeed { get; set; } // KB/s
 }
