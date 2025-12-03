@@ -1,6 +1,7 @@
 # 忽略构建结果
 bin/
 obj/
+publish/
 
 # 忽略 Rider/IDE 配置
 .idea/
