@@ -1,5 +1,13 @@
+# 忽略构建结果
 bin/
 obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
+
+# 忽略 Rider/IDE 配置
+.idea/
+*.sln.dotsettings.user
+*.suo
+*.user
+
+# 忽略系统文件
+.DS_Store
+Thumbs.db
