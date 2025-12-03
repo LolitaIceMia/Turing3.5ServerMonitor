@@ -75,8 +75,8 @@ public class SceneRenderer : IDisposable
 
         // ================== B. 温度折线图 (CPU/GPU Temp) ==================
         // 区域: (10, 145) -> (310, 265)
-        // 动态确定Y轴最大值，至少显示到80度
-        double maxTemp = Math.Max(80, Math.Max(_cpuTempHistory.Max(), _gpuTempHistory.Max()));
+        // 动态确定Y轴最大值，至少显示到110度
+        double maxTemp = Math.Max(110, Math.Max(_cpuTempHistory.Max(), _gpuTempHistory.Max()));
         DrawChartHeader(canvas, 10, 160, "TEMP (°C)",
             ("CPU", SKColors.DeepSkyBlue, $"{status.CpuTemp:F0}°C"),
             ("GPU", SKColors.OrangeRed, $"{status.GpuTemp:F0}°C"));
@@ -92,8 +92,8 @@ public class SceneRenderer : IDisposable
         // ================== D. 网络仪表盘 (Upload/Download) ==================
         // 区域: (10, 340) -> (310, 470)
         // 使用两个圆心绘制两个仪表
-        DrawGauge(canvas, new SKPoint(80, 420), 60, "UPLOAD", status.UploadSpeed, SKColors.SeaGreen);
-        DrawGauge(canvas, new SKPoint(240, 420), 60, "DOWNLOAD", status.DownloadSpeed, SKColors.DodgerBlue);
+        DrawGauge(canvas, new SKPoint(80, 420), 60, "UPLOAD", status.UploadSpeed, SKColors.MediumVioletRed);
+        DrawGauge(canvas, new SKPoint(240, 420), 60, "DOWNLOAD", status.DownloadSpeed, SKColors.LightBlue);
 
         return SKBitmap.FromImage(_surface.Snapshot());
     }
